@@ -1,67 +1,19 @@
+import { useState } from "react";
+
+type FindingLogItem = {
+  id: string;
+  time: string;
+  type: string;
+  title: string;
+  desc: string;
+  stats: string[];
+  confidence: number;
+  image?: string;
+  highlight?: boolean;
+};
+
 export default function FindingsLogReportScreen() {
-  const findings = [
-    {
-      id: "CAM_01",
-      time: "00:04:15.12",
-      type: "Micro-Expression",
-      title: "Suppressed Anger Response",
-      desc:
-        "Rapid contraction of the orbicularis oculi coupled with lip compression. Subject attempts to mask reaction to keyword “Funding Source”.",
-      stats: ["Voice Pitch 124Hz (Normal)", "Gaze Direct (-2° dev)", "Analysis: 81%"],
-      confidence: 94,
-      image:
-        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=1200&auto=format&fit=crop",
-    },
-    {
-      id: "CAM_01",
-      time: "00:08:22.05",
-      type: "Behavioral Mismatch",
-      title: "Verbal–Nonverbal Contradiction",
-      desc:
-        "Subject verbally states “Full cooperation” while adopting a closed, defensive posture (crossed arms, leaning back). Shoulders elevated indicating stress.",
-      stats: ["Spoken Sentiment +0.8", "Body Language -0.6", "Priority: High"],
-      confidence: 88,
-      image:
-        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=1200&auto=format&fit=crop",
-      highlight: true,
-    },
-    {
-      id: "CAM_02",
-      time: "00:12:45.09",
-      type: "Ocular Response",
-      title: "Lateral Eye Movement",
-      desc:
-        "Subject’s gaze shifts rapidly to the upper right quadrant during recall, suggesting constructed visual imagery rather than memory access.",
-      stats: ["Pupil Dilation 4.2mm (+10%)", "Duration 1.2s", "Analysis: 76%"],
-      confidence: 76,
-      image:
-        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=1200&auto=format&fit=crop",
-    },
-    {
-      id: "MIC_A",
-      time: "00:18:22.00",
-      type: "Vocal Stress",
-      title: "Pitch Anomaly",
-      desc:
-        "Sudden increase in vocal pitch combined with hesitation markers (“uh”, “um”). Detected during answer regarding “Known Associates”.",
-      stats: ["Frequency 185Hz (+45Hz)", "Jitter 2.4%", "Analysis: 82%"],
-      confidence: 82,
-      image:
-        "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=1200&auto=format&fit=crop",
-    },
-    {
-      id: "CAM_03",
-      time: "00:27:31.44",
-      type: "Tension Spike",
-      title: "Self-touch Cluster",
-      desc:
-        "Repeated self-touching at the collar and jawline coincides with elevated heart rate and micro-tremor in hands.",
-      stats: ["HR 102 (+12)", "Hand Tremor +0.7", "Analysis: 69%"],
-      confidence: 69,
-      image:
-        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop",
-    },
-  ];
+  const [findings] = useState<FindingLogItem[]>([]);
 
   return (
     <div className="min-h-screen bg-[#221e10] text-gray-100 font-display">
@@ -129,6 +81,10 @@ export default function FindingsLogReportScreen() {
           <div className="ml-auto text-xs text-primary/60 font-mono">Scan completion: 100%</div>
         </div>
 
+        {findings.length === 0 && (
+          <div className="mb-6 rounded-xl border border-white/10 bg-black/20 p-6 text-sm text-primary/80">No data available.</div>
+        )}
+
         <div className="grid grid-cols-1 gap-6">
           {findings.map((item) => (
             <article
@@ -139,7 +95,11 @@ export default function FindingsLogReportScreen() {
             >
               <div className="flex flex-col md:flex-row">
                 <div className="w-full md:w-56 h-48 md:h-auto relative overflow-hidden">
-                  <img src={item.image} alt={item.title} className="h-full w-full object-cover" />
+                  {item.image ? (
+                    <img src={item.image} alt={item.title} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="h-full w-full bg-black/30 flex items-center justify-center text-xs text-primary/70">No reference image</div>
+                  )}
                   <div className="absolute top-2 left-2 bg-black/60 text-primary text-[10px] font-mono px-2 py-1 rounded border border-primary/30">
                     {item.id}
                   </div>

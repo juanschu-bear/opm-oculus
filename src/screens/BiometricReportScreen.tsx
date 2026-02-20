@@ -1,4 +1,8 @@
+import { useState } from "react";
+
 export default function BiometricReportScreen() {
+  const [report] = useState<null>(null);
+
   return (
     <div className="biometric-report bg-background-light dark:bg-background-dark font-display text-gray-800 dark:text-gray-300 min-h-screen flex flex-col antialiased selection:bg-primary selection:text-black">
       <div className="w-full h-8 bg-primary text-background-dark flex items-center justify-center text-xs font-bold tracking-[0.2em] uppercase">
@@ -7,6 +11,9 @@ export default function BiometricReportScreen() {
       </div>
 
       <main className="flex-grow p-4 md:p-8 lg:p-12 max-w-[1600px] mx-auto w-full relative">
+        {report === null && (
+          <div className="mb-4 rounded-lg border border-white/10 bg-black/20 p-4 text-sm text-primary/80">No data available.</div>
+        )}
         <div className="bg-white dark:bg-black/20 backdrop-blur-sm border border-gray-200 dark:border-white/10 rounded-lg shadow-2xl overflow-hidden relative min-h-[1000px]">
           <div className="absolute inset-0 grid-bg pointer-events-none opacity-50" />
 

@@ -1,15 +1,17 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!email || !password || !name) return;
     window.localStorage.setItem("opm_auth_token", "demo-token");
-    window.location.hash = "dashboard";
+    navigate("/dashboard");
   };
 
   return (
@@ -71,7 +73,7 @@ export default function RegisterScreen() {
           Already have an account?{" "}
           <button
             className="text-white/80 hover:text-white"
-            onClick={() => (window.location.hash = "login")}
+            onClick={() => navigate("/login")}
           >
             Sign in
           </button>

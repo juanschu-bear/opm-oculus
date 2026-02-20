@@ -22,7 +22,7 @@ export type SessionState = {
   results: unknown | null;
   lastUploadName: string | null;
   apiBase: string;
-  startAnalyze: (file: File) => Promise<string | null>;
+  startAnalyze: (file: File, preset: string) => Promise<string | null>;
   pollStatus: () => Promise<void>;
   fetchResults: () => Promise<void>;
   setSessionId: (sessionId: string | null) => void;
@@ -103,13 +103,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     window.localStorage.setItem(PERSON_NAMES_STORAGE_KEY, JSON.stringify(store));
   };
 
-  const startAnalyze = async (file: File) => {
+  const startAnalyze = async (file: File, preset: string) => {
     setError(null);
     setStatus("uploading");
     setLastUploadName(file.name);
     window.localStorage.setItem("opm_last_upload", file.name);
     const formData = new FormData();
     formData.append("video", file);
+    formData.append("preset", preset);
 
     try {
       const response = await fetch(`${apiBase}/analyze`, {

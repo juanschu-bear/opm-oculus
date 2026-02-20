@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
 
 type StageStatus = "completed" | "active" | "pending";
@@ -71,6 +72,7 @@ function formatTime(totalSeconds: number) {
 
 export default function ProcessingAnalysisScreen() {
   const { jobId, status, pollStatus, fetchResults } = useSession();
+  const navigate = useNavigate();
   const [serverElapsed, setServerElapsed] = useState<number | null>(null);
   const totalDuration = STAGE_DURATIONS_SEC.reduce((a, b) => a + b, 0);
   const totalMs = totalDuration * 1000;
@@ -95,7 +97,7 @@ export default function ProcessingAnalysisScreen() {
   const audioRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
-    if (jobId) return;
+    if (!jobId) return;
     const interval = window.setInterval(() => {
       setElapsedMs((prev) => {
         const next = prev + 250;
@@ -108,6 +110,7 @@ export default function ProcessingAnalysisScreen() {
     }, 250);
     return () => window.clearInterval(interval);
   }, [totalMs, jobId]);
+
 
   useEffect(() => {
     if (!jobId) return;
@@ -154,7 +157,7 @@ export default function ProcessingAnalysisScreen() {
   useEffect(() => {
     if (!isComplete) return;
     const timeout = window.setTimeout(() => {
-      window.location.hash = "analysis";
+      navigate("/analysis");
     }, 900);
     return () => window.clearTimeout(timeout);
   }, [isComplete]);

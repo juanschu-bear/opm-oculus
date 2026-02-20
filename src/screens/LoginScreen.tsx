@@ -1,14 +1,16 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!email || !password) return;
     window.localStorage.setItem("opm_auth_token", "demo-token");
-    window.location.hash = "dashboard";
+    navigate("/dashboard");
   };
 
   return (
@@ -66,7 +68,7 @@ export default function LoginScreen() {
           <button className="hover:text-white">Forgot password?</button>
           <button
             className="hover:text-white"
-            onClick={() => (window.location.hash = "register")}
+            onClick={() => navigate("/register")}
           >
             Create account
           </button>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "@/context/SessionContext";
 import { fetchJsonFromAny, resolveApiBases } from "@/lib/api";
+import EmptyState from "@/components/ui/EmptyState";
 
 type PanelKey =
   | "mismatches"
@@ -51,194 +52,19 @@ const panelLabels: Record<PanelKey, string> = {
   voice: "Voice Analysis",
 };
 
-const quickPrompts: { key: PanelKey; label: string }[] = [
-  { key: "mismatches", label: "⚠️ Mismatches" },
-  { key: "emotional", label: "📈 Emotional Peaks" },
-  { key: "stress", label: "💗 Stress Indicators" },
-  { key: "comparison", label: "👥 Person Comparison" },
-  { key: "voice", label: "🎙️ Voice Analysis" },
-];
+const quickPrompts: { key: PanelKey; label: string }[] = [];
 
-const responses: Record<PanelKey, ChatMessage> = {
-  mismatches: {
-    role: "ai",
-    title: "⚠️ 3 Mismatches Detected",
-    items: [
-      {
-        icon: "⚠️",
-        text: "Verbal gratitude contradicts facial tension — ‘Thanks for joining me’ reads positive but muscles show stress",
-        time: "00:22",
-        tag: "B",
-      },
-      {
-        icon: "⚠️",
-        text: "Calm voice masks rising shoulder tension — vocal stability 0.88 while postural stress increases",
-        time: "02:48",
-        tag: "B",
-      },
-      {
-        icon: "🧩",
-        text: "Composure breach — vocal stability drops 45% when topic shifts to enforcement",
-        time: "03:00",
-        tag: "B",
-      },
-    ],
-    summary:
-      "All three mismatches show a disconnect between controlled verbal output and physical tension.",
-  },
-  emotional: {
-    role: "ai",
-    title: "📈 5 Emotional Peaks Identified",
-    items: [
-      { icon: "💫", text: "Duchenne smile, authentic warmth during opening", time: "00:12", tag: "B" },
-      { icon: "💫", text: "Genuine engagement on enforcement policy", time: "01:34", tag: "B" },
-      { icon: "💫", text: "Rapid authentic expressions during ICE discussion", time: "02:22", tag: "B" },
-      { icon: "💫", text: "Peak postural tension during opening question", time: "00:08", tag: "A" },
-      { icon: "💫", text: "Vocal composure breach, strongest signal in session", time: "03:00", tag: "B" },
-    ],
-    summary:
-      "Subject B shows a clear emotional arc: controlled warmth → authentic engagement → composure loss.",
-  },
-  stress: {
-    role: "ai",
-    title: "💗 Stress Indicators Across Session",
-    items: [
-      { icon: "🧍", text: "Sustained shoulder elevation, rigid upper body throughout", time: "00:08", tag: "A" },
-      { icon: "✋", text: "Repeated self-touch gestures (4 instances), self-regulatory", time: "00:18", tag: "A" },
-      { icon: "🧍", text: "Rising shoulder tension while maintaining vocal control", time: "01:54", tag: "B" },
-      { icon: "🎙️", text: "Voice stability crash from 0.86 to 0.47", time: "03:00", tag: "B" },
-    ],
-    summary:
-      "Subject B maintains controlled stress until the final segment where physical indicators break through.",
-  },
-  comparison: {
-    role: "ai",
-    title: "👥 Subject Comparison",
-    comparison: [
-      {
-        Findings: "8",
-        "Avg. Confidence": "64%",
-        "Vocal Stability": "0.91 (stable)",
-        "Key Pattern": "Self-regulatory",
-        "Stress Type": "Consistent anxiety",
-        "Emotional Range": "Narrow",
-      },
-      {
-        Findings: "19",
-        "Avg. Confidence": "52%",
-        "Vocal Stability": "0.47 (breach)",
-        "Key Pattern": "Performance labor",
-        "Stress Type": "Controlled → breach",
-        "Emotional Range": "Wide (10 genuine)",
-      },
-    ],
-    summary:
-      "Subject B displays 2.4x more behavioral findings despite appearing more composed. The strategy fails at 3:00.",
-  },
-  voice: {
-    role: "ai",
-    title: "🎙️ Voice Analysis by Subject",
-    groups: [
-      {
-        label: "Subject A · Interviewer",
-        items: [
-          { icon: "🟠", text: "Stable cadence across session, minimal jitter", time: "00:40" },
-          { icon: "🟠", text: "Pitch variance holds within ±3%", time: "02:05" },
-        ],
-      },
-      {
-        label: "Subject B · Person of Interest",
-        items: [
-          { icon: "🔵", text: "Pitch variance peak: +12% in Q3 response", time: "01:10" },
-          { icon: "🔵", text: "Jitter spike: abrupt micro-variations detected", time: "02:31" },
-          { icon: "🔵", text: "Breath control drop during enforcement segment", time: "03:00" },
-        ],
-      },
-    ],
-    summary: "Voice volatility is concentrated on Subject B during the breach window.",
-  },
-};
+const responses: Partial<Record<PanelKey, ChatMessage>> = {};
 
-const subjectA = {
-  name: "Subject A",
-  role: "Interviewer",
-  person: "Brian O.",
-  metrics: {
-    Findings: "8",
-    "Avg. Confidence": "64%",
-    "Vocal Stability": "0.91 (stable)",
-    "Key Pattern": "Self-regulatory",
-    "Stress Type": "Consistent anxiety",
-    "Emotional Range": "Narrow",
-  },
-  strengths: ["Stable vocal control", "Consistent posture"],
-  weaknesses: ["Self-touch frequency", "Low emotional range"],
-};
+const subjectA = { name: "Subject A", role: "", person: "", metrics: {} as Record<string, string>, strengths: [] as string[], weaknesses: [] as string[] };
 
-const subjectB = {
-  name: "Subject B",
-  role: "Person of Interest",
-  person: "Marcus R.",
-  metrics: {
-    Findings: "19",
-    "Avg. Confidence": "52%",
-    "Vocal Stability": "0.47 (breach)",
-    "Key Pattern": "Performance labor",
-    "Stress Type": "Controlled → breach",
-    "Emotional Range": "Wide (10 genuine)",
-  },
-  strengths: ["High engagement early", "Wide emotional range"],
-  weaknesses: ["Composure breach at 3:00", "Voice instability"],
-};
+const subjectB = { name: "Subject B", role: "", person: "", metrics: {} as Record<string, string>, strengths: [] as string[], weaknesses: [] as string[] };
 
-const divergenceMetrics = [
-  {
-    label: "Vocal Stability",
-    a: "0.91 (stable)",
-    b: "0.47 (breach)",
-    delta: "A +0.44",
-    severity: "Critical",
-  },
-  {
-    label: "Findings Count",
-    a: "8",
-    b: "19",
-    delta: "B +11",
-    severity: "High",
-  },
-  {
-    label: "Micro-Expressions",
-    a: "Low variance",
-    b: "High variance",
-    delta: "B +62%",
-    severity: "High",
-  },
-  {
-    label: "Stress Response",
-    a: "Consistent",
-    b: "Breach at 3:00",
-    delta: "B volatile",
-    severity: "Moderate",
-  },
-  {
-    label: "Emotional Range",
-    a: "Narrow",
-    b: "Wide (10 genuine)",
-    delta: "B broader",
-    severity: "Moderate",
-  },
-];
+const divergenceMetrics: { label: string; a: string; b: string; delta: string; severity: string }[] = [];
 
-const overlayOptions = [
-  "All overlays",
-  "Voice",
-  "Stress",
-  "Posture",
-  "Hands",
-  "Face",
-];
+const overlayOptions: string[] = [];
 
-const windowOptions = ["Full session", "Segment 1", "Segment 2", "Segment 3"];
+const windowOptions: string[] = [];
 
 const getInitials = (name: string) =>
   name
@@ -258,8 +84,8 @@ export default function ComparisonSummaryScreen() {
   const [jumpTo, setJumpTo] = useState<string | null>(null);
   const [overlayMenuOpen, setOverlayMenuOpen] = useState(false);
   const [windowMenuOpen, setWindowMenuOpen] = useState(false);
-  const [overlaySelection, setOverlaySelection] = useState(overlayOptions[0]);
-  const [windowSelection, setWindowSelection] = useState(windowOptions[0]);
+  const [overlaySelection, setOverlaySelection] = useState(overlayOptions[0] ?? "");
+  const [windowSelection, setWindowSelection] = useState(windowOptions[0] ?? "");
   const [sessionMenuOpen, setSessionMenuOpen] = useState(false);
   const [sessions, setSessions] = useState<
     { session_id: string; created_at: string; video: string; chunks: number }[]
@@ -303,7 +129,7 @@ export default function ComparisonSummaryScreen() {
     });
   };
 
-  const panel = responses[activePanel];
+  const panel = responses[activePanel] ?? null;
 
   const handlePrompt = (key: PanelKey) => {
     setActivePanel(key);
@@ -316,7 +142,7 @@ export default function ComparisonSummaryScreen() {
       setIsTyping(false);
       setChatMessages([
         { role: "user", text: `Show me the ${panelLabels[key].toLowerCase()}` },
-        responses[key],
+        responses[key] ?? { role: "ai", title: "No data", items: [], summary: "No data available." },
       ]);
     }, 550);
   };
@@ -536,7 +362,7 @@ export default function ComparisonSummaryScreen() {
   ): Promise<ChatMessage> => {
     if (!apiBases.length) {
       await new Promise((resolve) => window.setTimeout(resolve, 650));
-      return panelMatch.matched ? responses[panelMatch.key] : buildCustomResponse(input);
+      return panelMatch.matched ? (responses[panelMatch.key] ?? buildCustomResponse(input)) : buildCustomResponse(input);
     }
 
     try {
@@ -616,7 +442,7 @@ export default function ComparisonSummaryScreen() {
     if (!panelMatch.matched) {
       return buildCustomResponse(input);
     }
-    return responses[panelMatch.key];
+    return responses[panelMatch.key] ?? buildCustomResponse(input);
   };
 
   const handleSend = async () => {
@@ -634,7 +460,7 @@ export default function ComparisonSummaryScreen() {
   };
 
   const comparisonCards = useMemo(() => {
-    if (panel.role !== "ai" || !("comparison" in panel)) return null;
+    if (!panel || panel.role !== "ai" || !("comparison" in panel)) return null;
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
         {panel.comparison.map((stats, index) => (
@@ -971,6 +797,7 @@ export default function ComparisonSummaryScreen() {
                 Key Divergence Metrics
               </div>
               <div className="mt-4 space-y-3">
+                {divergenceMetrics.length === 0 && <EmptyState />}
                 {divergenceMetrics.map((metric) => (
                   <div
                     key={metric.label}
@@ -1220,6 +1047,7 @@ export default function ComparisonSummaryScreen() {
           )}
 
           <div className="mt-3 flex flex-wrap gap-2">
+            {quickPrompts.length === 0 && <EmptyState />}
             {quickPrompts.map((prompt) => (
               <button
                 key={prompt.key}

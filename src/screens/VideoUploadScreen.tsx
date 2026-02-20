@@ -1,19 +1,30 @@
 import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
 
 export default function VideoUploadScreen() {
   const { startAnalyze, status, error, lastUploadName } = useSession();
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState("School");
+
+  const presets = [
+    { value: "School", label: "🏫 School — Quick engagement scan" },
+    { value: "Therapy", label: "🧠 Therapy — Deep session analysis" },
+    { value: "Coaching", label: "🎯 Coaching — Performance feedback" },
+    { value: "Sales", label: "💼 Sales — Conversation analysis" },
+    { value: "Investigation", label: "🔍 Investigation — Maximum depth" },
+  ];
 
   const handleFile = async (file: File) => {
     setSelectedFile(file);
     setIsUploading(true);
-    const jobId = await startAnalyze(file);
+    const jobId = await startAnalyze(file, selectedPreset);
     setIsUploading(false);
     if (jobId) {
-      window.location.hash = "processing";
+      navigate("/processing");
     }
   };
 
@@ -109,6 +120,23 @@ export default function VideoUploadScreen() {
               </p>
             </div>
 
+
+
+            <div className="w-full max-w-2xl glass-panel rounded-xl p-4">
+              <div className="text-xs uppercase tracking-[0.2em] text-slate-500 mb-3">Analysis preset</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {presets.map((preset) => (
+                  <button
+                    key={preset.value}
+                    type="button"
+                    onClick={() => setSelectedPreset(preset.value)}
+                    className={`rounded-lg border px-3 py-2 text-left text-sm transition-colors ${selectedPreset === preset.value ? "border-primary bg-primary/10 text-white" : "border-white/10 text-slate-300 hover:border-primary/50"}`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div
               className="w-full max-w-2xl aspect-[16/9] glass-panel rounded-xl pulsing-upload-zone relative flex flex-col items-center justify-center gap-4 sm:gap-6 cursor-pointer group hover:bg-white/[0.05] transition-all duration-500 overflow-hidden"
               onClick={handleBrowse}

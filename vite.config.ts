@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         "@": "/src",
+        "react-router-dom": "/src/lib/react-router-dom.tsx",
       },
     },
     server: proxy ? { proxy } : undefined,

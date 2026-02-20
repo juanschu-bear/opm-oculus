@@ -1,105 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "@/context/SessionContext";
 import { fetchJsonFromAny, resolveApiBases } from "@/lib/api";
+import EmptyState from "@/components/ui/EmptyState";
 
-const liveFindings = [
-  {
-    title: "Nervous touch at 00:00:14",
-    detail: "Self-touch + shoulder tension spike. Likely anxiety response.",
-    time: "00:00:14",
-    tone: "#22d3ee",
-  },
-  {
-    title: "Uncertainty cluster at 00:02:08",
-    detail: "Hesitation + gaze aversion + micro tremor detected.",
-    time: "00:02:08",
-    tone: "#f59e0b",
-  },
-  {
-    title: "Defensive posture at 00:04:22",
-    detail: "Crossed arms + backward lean synchronized.",
-    time: "00:04:22",
-    tone: "#a855f7",
-  },
-];
-
-const highlightedMoments = [
-  {
-    title: "Voice crash on keyword",
-    detail: "VSI drops 48% when 'federal agents' is mentioned.",
-    time: "00:03:41",
-  },
-  {
-    title: "Stress spike + blink rate",
-    detail: "Blink rate + respiration jump after Q5.",
-    time: "00:05:10",
-  },
-  {
-    title: "Contradiction marker",
-    detail: "Verbal mismatch vs. head shake. Flagged for review.",
-    time: "00:06:02",
-  },
-];
-
-const channelFeeds = [
-  {
-    name: "Face",
-    status: "Tracking",
-    value: "Affect: Neutral",
-    accent: "#22d3ee",
-    spark: [22, 30, 40, 28, 35, 24, 32, 42, 38, 30],
-  },
-  {
-    name: "AUs",
-    status: "Active",
-    value: "AU4 + AU12",
-    accent: "#a855f7",
-    spark: [10, 12, 18, 24, 16, 20, 28, 22, 18, 14],
-  },
-  {
-    name: "Pose",
-    status: "Leaning",
-    value: "Back 12°",
-    accent: "#60a5fa",
-    spark: [8, 10, 14, 18, 22, 20, 16, 14, 12, 10],
-  },
-  {
-    name: "Tensions",
-    status: "High",
-    value: "Shoulder + Neck",
-    accent: "#f87171",
-    spark: [12, 18, 26, 30, 34, 28, 24, 20, 22, 26],
-  },
-  {
-    name: "Hands",
-    status: "Self-touch",
-    value: "2 events",
-    accent: "#f59e0b",
-    spark: [6, 8, 10, 14, 18, 24, 20, 16, 12, 10],
-  },
-  {
-    name: "Text Emotions",
-    status: "Mixed",
-    value: "Uncertain 0.62",
-    accent: "#34d399",
-    spark: [14, 16, 18, 22, 20, 18, 16, 20, 24, 22],
-  },
-  {
-    name: "Voice",
-    status: "Jitter",
-    value: "Pitch +4.2%",
-    accent: "#f97316",
-    spark: [10, 14, 18, 26, 32, 36, 28, 22, 18, 16],
-  },
-  {
-    name: "Person ID",
-    status: "Locked",
-    value: "P1 · Brian",
-    accent: "#e879f9",
-    spark: [20, 22, 24, 24, 22, 20, 18, 18, 20, 22],
-  },
-];
-
+const liveFindings: { title: string; detail: string; time: string; tone: string }[] = [];
+const highlightedMoments: { title: string; detail: string; time: string }[] = [];
+const channelFeeds: { name: string; status: string; value: string; accent: string; spark: number[] }[] = [];
 type ChatMessage =
   | { role: "user"; text: string }
   | {
@@ -116,84 +22,9 @@ type PersonProfile = {
   role?: string;
 };
 
-const quickPrompts = [
-  { key: "mismatches", label: "⚠️ Mismatches" },
-  { key: "emotional", label: "📈 Emotional Peaks" },
-  { key: "stress", label: "💗 Stress Indicators" },
-  { key: "comparison", label: "👥 Person Comparison" },
-  { key: "voice", label: "🎙️ Voice Analysis" },
-];
+const quickPrompts: { key: string; label: string }[] = [];
 
-const chatResponses: Record<string, ChatMessage> = {
-  mismatches: {
-    role: "ai",
-    title: "⚠️ 3 Mismatches Detected",
-    items: [
-      {
-        icon: "⚠️",
-        text: "Verbal gratitude contradicts facial tension — positive words, stress markers present",
-        time: "00:22",
-      },
-      {
-        icon: "⚠️",
-        text: "Calm voice masks rising shoulder tension — vocal stability 0.88 while posture stress increases",
-        time: "02:48",
-      },
-      {
-        icon: "🧩",
-        text: "Composure breach — vocal stability drops 45% when topic shifts to enforcement",
-        time: "03:00",
-      },
-    ],
-    summary:
-      "All three mismatches show a disconnect between controlled verbal output and physical tension.",
-  },
-  emotional: {
-    role: "ai",
-    title: "📈 5 Emotional Peaks Identified",
-    items: [
-      { icon: "💫", text: "Subject B — Duchenne smile, authentic warmth during opening", time: "00:12" },
-      { icon: "💫", text: "Subject B — genuine engagement on enforcement policy", time: "01:34" },
-      { icon: "💫", text: "Subject B — rapid authentic expressions during ICE discussion", time: "02:22" },
-      { icon: "💫", text: "Subject A — peak postural tension during opening question", time: "00:08" },
-      { icon: "💫", text: "Subject B — vocal composure breach, strongest signal in session", time: "03:00" },
-    ],
-    summary:
-      "Subject B shows a clear emotional arc: controlled warmth → authentic engagement → composure loss.",
-  },
-  stress: {
-    role: "ai",
-    title: "💗 Stress Indicators Across Session",
-    items: [
-      { icon: "🧍", text: "Subject A — sustained shoulder elevation, rigid upper body throughout", time: "00:08" },
-      { icon: "✋", text: "Subject A — repeated self-touch gestures (4 instances), self-regulatory", time: "00:18" },
-      { icon: "🧍", text: "Subject B — rising shoulder tension while maintaining vocal control", time: "01:54" },
-      { icon: "🎙️", text: "Subject B — voice stability crash from 0.86 to 0.47", time: "03:00" },
-    ],
-    summary:
-      "Subject B maintains controlled stress until the final segment where physical indicators break through.",
-  },
-  comparison: {
-    role: "ai",
-    title: "👥 Subject Comparison",
-    items: [
-      { icon: "🟠", text: "Subject A — findings: 8, avg confidence 64%", time: "Summary" },
-      { icon: "🔵", text: "Subject B — findings: 19, avg confidence 52%", time: "Summary" },
-    ],
-    summary:
-      "Subject B displays 2.4x more behavioral findings despite appearing more composed.",
-  },
-  voice: {
-    role: "ai",
-    title: "🎙️ Voice Analysis",
-    items: [
-      { icon: "🟠", text: "Subject A — stable cadence, minimal jitter", time: "00:40" },
-      { icon: "🔵", text: "Subject B — pitch variance peak +12% in Q3 response", time: "01:10" },
-      { icon: "🔵", text: "Subject B — jitter spike detected", time: "02:31" },
-    ],
-    summary: "Prosody shifts align with composure breach moments.",
-  },
-};
+const chatResponses: Record<string, ChatMessage> = {};
 
 const overlayTabs = [
   "Base Feed",
@@ -838,6 +669,7 @@ export default function CommandCenterScreen() {
                 <span className="text-primary">Syncing</span>
               </div>
               <div className="mt-5 flex flex-col gap-4">
+                {liveFindings.length === 0 && <EmptyState />}
                 {liveFindings.map((item) => (
                   <div
                     key={item.title}
@@ -869,6 +701,7 @@ export default function CommandCenterScreen() {
             Multi-Channel Monitor
           </div>
           <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {channelFeeds.length === 0 && <EmptyState />}
             {channelFeeds.map((channel) => (
               <div
                 key={channel.name}
@@ -915,6 +748,7 @@ export default function CommandCenterScreen() {
               System Highlighted Moments
             </div>
             <div className="mt-5 flex flex-col gap-4">
+              {highlightedMoments.length === 0 && <EmptyState />}
               {highlightedMoments.map((item) => (
                 <div
                   key={item.title}
@@ -1112,6 +946,7 @@ export default function CommandCenterScreen() {
           )}
 
           <div className="mt-3 flex flex-wrap gap-2">
+            {quickPrompts.length === 0 && <EmptyState />}
             {quickPrompts.map((prompt) => (
               <button
                 key={prompt.key}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
 import { fetchJsonFromAny, resolveApiBases } from "@/lib/api";
 
@@ -10,11 +11,18 @@ type SessionRow = {
 };
 
 export default function DashboardScreen() {
-  const { apiBase, setSessionId } = useSession();
+  const { apiBase, sessionId, setSessionId } = useSession();
+  const navigate = useNavigate();
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const apiBases = resolveApiBases(apiBase);
+
+  const resolveSessionId = () => sessionId ?? sessions[0]?.session_id ?? "demo-session";
+
+  const navigateToSessionRoute = (suffix = "") => {
+    navigate(`/session/${resolveSessionId()}${suffix}`);
+  };
 
   useEffect(() => {
     let ignore = false;
@@ -60,13 +68,13 @@ export default function DashboardScreen() {
           <div className="flex items-center gap-3 text-xs text-white/60">
             <button
               className="rounded-full border border-white/10 px-3 py-1 hover:text-white"
-              onClick={() => (window.location.hash = "upload")}
+              onClick={() => navigate("/upload")}
             >
               New Upload
             </button>
             <button
               className="rounded-full border border-white/10 px-3 py-1 hover:text-white"
-              onClick={() => (window.location.hash = "command")}
+              onClick={() => navigateToSessionRoute()}
             >
               Command Center
             </button>
@@ -95,7 +103,7 @@ export default function DashboardScreen() {
                 key={session.session_id}
                 onClick={() => {
                   setSessionId(session.session_id);
-                  window.location.hash = "command";
+                  navigate(`/session/${session.session_id}`);
                 }}
                 className="w-full text-left rounded-2xl border border-white/10 bg-black/30 px-4 py-4 hover:border-primary/40"
               >
@@ -117,21 +125,21 @@ export default function DashboardScreen() {
           <div className="mt-4 grid gap-4">
             <button
               className="rounded-2xl border border-white/10 bg-black/30 px-4 py-4 text-left hover:border-primary/40"
-              onClick={() => (window.location.hash = "upload")}
+              onClick={() => navigate("/upload")}
             >
               <div className="text-sm font-semibold text-white">Upload New Video</div>
               <div className="text-xs text-white/50 mt-1">Start a fresh analysis pipeline</div>
             </button>
             <button
               className="rounded-2xl border border-white/10 bg-black/30 px-4 py-4 text-left hover:border-primary/40"
-              onClick={() => (window.location.hash = "comparison")}
+              onClick={() => navigateToSessionRoute("/comparison")}
             >
               <div className="text-sm font-semibold text-white">Comparison Report</div>
               <div className="text-xs text-white/50 mt-1">Review subject divergences</div>
             </button>
             <button
               className="rounded-2xl border border-white/10 bg-black/30 px-4 py-4 text-left hover:border-primary/40"
-              onClick={() => (window.location.hash = "findings")}
+              onClick={() => navigateToSessionRoute("/findings")}
             >
               <div className="text-sm font-semibold text-white">Findings Log</div>
               <div className="text-xs text-white/50 mt-1">Detailed event timeline</div>
